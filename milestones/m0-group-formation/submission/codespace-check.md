@@ -1,7 +1,7 @@
-Tested by:
+Tested by: Megan Kadzirange, Miriam Nguyen, Kyle Fernandez, Keerit Gill
 
-Test:
+Test: Ran a Quarto check and confirmed that R, Quarto, and the tidyverse were available.
 
-Result:
+Result: Passed for all four members.
 
-Setup issue and plan: 
+Setup issue and plan: No current issue; package or path problems will be recorded in the README before the next milestone
