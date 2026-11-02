@@ -1,0 +1,117 @@
+# Load food insecurity dataset
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+foodinsecurity <- read_csv("data/13100835.csv", show_col_types = FALSE)
+
+summary(foodinsecurity)
+```
+
+# Define the cohort 
+
+```{r}
+BC_cohort <- foodinsecurity |>
+  filter(GEO=='British Columbia')
+
+cohort_counts <- tibble(
+  step = c("Prepared file", "After British Columbia restriction"),
+  n = c(nrow(foodinsecurity), nrow(BC_cohort))
+)
+
+kable(cohort_counts)
+```
+
+# Missingness Table
+
+```{r}
+key_vars <- c("GEO", "Demographic characteristics", "Household food security status", "REF_DATE", "VALUE")
+
+missingness <- tibble(variable = key_vars) |>
+  mutate(
+    missing_n = vapply(
+      BC_cohort[key_vars],
+      function(x) sum(is.na(x)),
+      numeric(1)
+    ),
+    missing_percent = round(100 * missing_n / nrow(BC_cohort), 1)
+  )
+
+write_csv(
+  missingness,
+  "milestones/m2-preliminary-analysis/submission/missingness-summary.csv"
+)
+
+kable(missingness)
+```
+
+# Table 1-style summary
+
+```{r}
+latest_year <- BC_cohort |>
+  filter(
+    `Demographic characteristics` == "All persons",
+    Statistics == "Number of persons"
+  ) |>
+  summarise(year = max(as.integer(REF_DATE), na.rm = TRUE)) |>
+  pull(year)
+
+table1 <- BC_cohort |>
+  filter(
+    `Demographic characteristics` == "All persons",
+    Statistics == "Number of persons",
+    as.integer(REF_DATE) == latest_year,
+    `Household food security status` %in% c(
+      "Food secure",
+      "Food insecure, marginal",
+      "Food insecure, moderate",
+      "Food insecure, severe"
+    )
+  ) |>
+  transmute(
+    `Food security status` = `Household food security status`,
+    `Estimated people` = VALUE
+  )
+
+knitr::kable(table1, format.args = list(big.mark = ","))
+```
+
+# Preliminary Analysis Figure
+
+```{r}
+ggplot(
+  table1,
+  aes(
+    x = reorder(`Food security status`, `Estimated people`),
+    y = `Estimated people`,
+    fill = `Food security status`
+  )
+) +
+  geom_col() +
+  geom_text(
+    aes(label = scales::comma(`Estimated people`)),
+    hjust = -0.15
+  ) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    expand = expansion(mult = c(0, 0.15))
+  ) +
+  labs(
+    title = paste(
+      "Estimated number of people by household food security status, British Columbia,",
+      latest_year
+    ),
+    x = NULL,
+    y = "Estimated persons"
+  ) +
+  theme_minimal()
+```
+
+# Interpretation
+
+In 2024, most people in British Columbia were estimated to be food secure (4,254,000). Among the plotted food-insecure categories, moderate food insecurity had the largest estimate (644,800), compared with marginal (317,500) and severe (319,300).
+
+These are population estimates, not a count of individually observed people. This all-persons summary cannot explain why people experience food insecurity, describe differences between demographic groups, establish trends over time, or show that one factor caused another.
