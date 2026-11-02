@@ -114,4 +114,6 @@ ggplot(
 
 In 2024, most people in British Columbia were estimated to be food secure (4,254,000). Among the plotted food-insecure categories, moderate food insecurity had the largest estimate (644,800), compared with marginal (317,500) and severe (319,300).
 
-These are population estimates, not a count of individually observed people. This all-persons summary cannot explain why people experience food insecurity, describe differences between demographic groups, establish trends over time, or show that one factor caused another.
+# What this analysis cannot claim
+
+The figures are population estimates, not individual headcounts. This chart cannot explain causes, compare demographic subgroups, establish trends, or show that one factor caused another.
