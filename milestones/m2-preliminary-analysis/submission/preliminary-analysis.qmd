@@ -1,4 +1,10 @@
-# Load food insecurity dataset
+## Preliminary Analysis of Household Food Security in British Columbia, 2024
+
+# Question
+
+What is the estimated number of people in British Columbia by household food security status in 2024?
+
+# Setup + summary
 
 ```{r}
 library(tidyverse)
@@ -9,8 +15,9 @@ foodinsecurity <- read_csv("data/13100835.csv", show_col_types = FALSE)
 summary(foodinsecurity)
 ```
 
-# Define the cohort 
+# Cohort 
 
+We restricted the prepared file to records for British Columbia only. Missing values were counted before complete-case rows were selected for the grouped results.
 ```{r}
 BC_cohort <- foodinsecurity |>
   filter(GEO=='British Columbia')
@@ -22,6 +29,7 @@ cohort_counts <- tibble(
 
 kable(cohort_counts)
 ```
+
 
 # Missingness Table
 
@@ -101,14 +109,18 @@ ggplot(
   ) +
   labs(
     title = paste(
-      "Estimated number of people by household food security status, British Columbia,",
+      "Estimated number of people by household food\n security status, British Columbia,",
       latest_year
     ),
     x = NULL,
-    y = "Estimated persons"
+    y = "Estimated persons",
+    caption = paste(
+      "Estimated number of persons by household food security status in\n British Columbia, 2024. Values are weighted estimates and descriptive.\n Source: Statistics Canada, Table 13-10-0835-01."
+    )
   ) +
   theme_minimal()
 ```
+
 
 # Interpretation
 
