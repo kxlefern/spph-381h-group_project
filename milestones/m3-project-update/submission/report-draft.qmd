@@ -1,0 +1,242 @@
+## Household Food Insecurity Across British Columbia, Quebec, and Ontario in 2024
+
+# Audience and question
+
+This draft is for federal public health staff examining trends in household food insecurity in British Columbia, Quebec, and Ontario in 2024. It asks how household food insecurity status vary across British Columbia, Quebec, and Ontario in 2024. 
+
+# Data and methods
+
+We used the prepared Statistics Canada "Food insecurity by selected demographic characteristics" CSV and restricted the data to British Columbia, Quebec, and Ontario for 2024. We reported missingness for the key variables before filtering the cohorts to GEO (geographic information), demographic characteristics, household food security status, REF_DATE (year), and VALUE (number of people). The grouped summary reports estimated number of persons by household food security status for each province; the figure compares these estimates side by side. These results describe the prepared household food security records and cannot support causal claims.
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+foodinsecurity <- read_csv("data/13100835.csv", show_col_types = FALSE)
+
+summary(foodinsecurity)
+```
+
+
+```{r}
+BC_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'British Columbia',
+    as.integer(REF_DATE) == 2024
+  )
+  
+
+BCcohort_counts <- tibble(
+  step = c("Prepared file", "After British Columbia restriction"),
+  n = c(nrow(foodinsecurity), nrow(BC_cohort))
+)
+
+kable(BCcohort_counts)
+```
+
+```{r}
+QC_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'Quebec',
+    as.integer(REF_DATE) == 2024
+  )
+
+QCcohort_counts <- tibble(
+  step = c("Prepared file", "After Quebec restriction"),
+  n = c(nrow(foodinsecurity), nrow(QC_cohort))
+)
+
+kable(QCcohort_counts)
+```
+
+```{r}
+ON_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'Ontario',
+    as.integer(REF_DATE) == 2024
+  )
+
+ONcohort_counts <- tibble(
+  step = c("Prepared file", "After Ontario restriction"),
+  n = c(nrow(foodinsecurity), nrow(ON_cohort))
+)
+
+kable(ONcohort_counts)
+```
+
+```{r}
+key_vars <- c("GEO", "Demographic characteristics", "Household food security status", "REF_DATE", "VALUE")
+
+BCmissingness <- tibble(variable = key_vars) |>
+  mutate(
+    missing_n = vapply(
+      BC_cohort[key_vars],
+      function(x) sum(is.na(x)),
+      numeric(1)
+    ),
+    missing_percent = round(100 * missing_n / nrow(BC_cohort), 1)
+  )
+
+write_csv(
+  BCmissingness,
+  "milestones/m2-preliminary-analysis/submission/missingness-summary.csv"
+)
+
+kable(BCmissingness)
+```
+
+```{r}
+key_vars <- c("GEO", "Demographic characteristics", "Household food security status", "REF_DATE", "VALUE")
+
+QCmissingness <- tibble(variable = key_vars) |>
+  mutate(
+    missing_n = vapply(
+      QC_cohort[key_vars],
+      function(x) sum(is.na(x)),
+      numeric(1)
+    ),
+    missing_percent = round(100 * missing_n / nrow(QC_cohort), 1)
+  )
+
+write_csv(
+  QCmissingness,
+  "milestones/m2-preliminary-analysis/submission/missingness-summary.csv"
+)
+
+kable(QCmissingness)
+```
+
+```{r}
+key_vars <- c("GEO", "Demographic characteristics", "Household food security status", "REF_DATE", "VALUE")
+
+ONmissingness <- tibble(variable = key_vars) |>
+  mutate(
+    missing_n = vapply(
+      ON_cohort[key_vars],
+      function(x) sum(is.na(x)),
+      numeric(1)
+    ),
+    missing_percent = round(100 * missing_n / nrow(ON_cohort), 1)
+  )
+
+write_csv(
+  ONmissingness,
+  "milestones/m2-preliminary-analysis/submission/missingness-summary.csv"
+)
+
+kable(ONmissingness)
+```
+
+
+# Current results
+
+```{r}
+all_cohorts <- bind_rows(BC_cohort, QC_cohort, ON_cohort)
+
+latest_year <- all_cohorts |>
+  filter(
+    `Demographic characteristics` == "All persons",
+    Statistics == "Number of persons"
+  ) |>
+  summarise(year = max(as.integer(REF_DATE), na.rm = TRUE)) |>
+  pull(year)
+
+table1 <- all_cohorts |>
+  filter(
+    `Demographic characteristics` == "All persons",
+    Statistics == "Number of persons",
+    as.integer(REF_DATE) == latest_year,
+    `Household food security status` %in% c(
+      "Food secure",
+      "Food insecure, marginal",
+      "Food insecure, moderate",
+      "Food insecure, severe"
+    )
+  ) |>
+  transmute(
+    Province = GEO,
+    `Food security status` = `Household food security status`,
+    `Estimated people` = VALUE
+  )
+
+knitr::kable(table1, format.args = list(big.mark = ","))
+```
+
+```{r}
+plot_data <- table1 |>
+  mutate(
+    `Food security status` = factor(
+      `Food security status`,
+      levels = c(
+        "Food secure",
+        "Food insecure, marginal",
+        "Food insecure, moderate",
+        "Food insecure, severe"
+      )
+    ),
+    Province = factor(
+      Province,
+      levels = c("British Columbia", "Quebec", "Ontario")
+    ),
+    status_position = as.numeric(`Food security status`)
+  )
+
+ggplot(
+  plot_data,
+  aes(
+    x = status_position,
+    y = `Estimated people`,
+    fill = Province,
+    group = Province
+  )
+) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = recode(Province, "British Columbia" = "BC", Quebec = "QC", Ontario = "ON")),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3
+  ) +
+  scale_fill_brewer(palette = "Set2", name = "Province") +
+  scale_x_continuous(
+    breaks = seq_len(4),
+    labels = levels(plot_data$`Food security status`),
+    expand = expansion(add = 0.5)
+  ) +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+  labs(
+    title = "Household Food Insecurity Across British Columbia, Quebec, 
+    and Ontario in 2024",
+    x = "Food security status",
+    y = "Estimated people",
+    caption = paste(
+      "Estimated people by food security status by BC, QC, ON, 2024.",
+      
+      "Descriptive counts; vertical scale begins at zero."
+    )
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1))
+```
+
+
+# Draft interpretation
+
+The overall distribution by food security status is broadly consistent across British Columbia, Quebec, and Ontario. Food-secure people make up the largest estimated group in each province, followed by the moderate, marginal, and severe food-insecure categories. The absolute estimated counts differ across provinces, but these differences mainly reflect differences in population size and do not establish that one province has a higher or lower prevalence. The figure is useful for comparing 2024 cohort estimates, but it does not identify a cause or show a population trend.
+
+# Limitations
+
+- The estimates are descriptive and do not report province-level population prevalence or apply survey weights.
+- Missing or excluded records may affect the estimated values.
+- Cross-sectional differences across provinces do not establish causality or show a population trend over time.
+
+# Draft next step
+
+For a real decision, the next analysis would use the appropriate survey design and examine whether missingness changes the comparison. That extension is not part of this course project.
+
+# References
+
+Government of Canada. 2026. "Food insecurity by selected demographic characteristics - Dataset." [https://open.canada.ca/data/en/dataset/9bcb8daa-a528-47d1-a54e-b2b16d78119f/resource/530cbc11-8415-4a7c-a49f-914ebc62a18e]
