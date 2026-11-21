@@ -1,1 +1,1 @@
-Used to help with adding QC and ON cohort data to table 1 summary alongside BC cohort data
+We used Copilot to help with adding QC and ON cohort data to table 1 summary alongside BC cohort data. Additionally, updating our graph to reflect all three chosen cohorts. Finally, we used Copilot to draft captions. The group ensured every number against the rendered table and reran the report and dashboard. We added to the draft interpretation that the data is unweighted, descriptive, and modest. 

@@ -225,7 +225,7 @@ ggplot(
 
 # Draft interpretation
 
-The overall distribution by food security status is broadly consistent across British Columbia, Quebec, and Ontario. Food-secure people make up the largest estimated group in each province, followed by the moderate, marginal, and severe food-insecure categories. The absolute estimated counts differ across provinces, but these differences mainly reflect differences in population size and do not establish that one province has a higher or lower prevalence. The figure is useful for comparing 2024 cohort estimates, but it does not identify a cause or show a population trend.
+The overall distribution by food security status is broadly consistent across British Columbia, Quebec, and Ontario. Food-secure people make up the largest estimated group in each province, followed by the moderate, marginal, and severe food-insecure categories. The absolute estimated counts differ across provinces, but these differences mainly reflect differences in population size and do not establish that one province has a higher or lower prevalence. The figure is useful for comparing 2024 cohort estimates, but it does not identify a cause or show a population trend. This interpretation is unweight, descriptive, and modest. 
 
 # Limitations
 
