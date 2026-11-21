@@ -1,0 +1,119 @@
+# Dashboard / KT product
+
+## Audience Question
+
+Audience: Federal public health staff examining household food insecurity in British Columbia, Quebec, and Ontario.
+
+Question: How do estimated numbers of people by household food security status vary across the three provinces in 2024?
+
+## Setup
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+foodinsecurity <- read_csv("data/13100835.csv", show_col_types = FALSE)
+
+summary(foodinsecurity)
+
+BC_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'British Columbia',
+    as.integer(REF_DATE) == 2024
+  )
+  
+QC_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'Quebec',
+    as.integer(REF_DATE) == 2024
+  )
+
+ON_cohort <- foodinsecurity |>
+  filter(
+    GEO == 'Ontario',
+    as.integer(REF_DATE) == 2024
+  )
+
+all_cohorts <- bind_rows(BC_cohort, QC_cohort, ON_cohort)
+```
+
+
+
+## Control
+
+In a Shiny app, this would become a dropdown. In this static starter, change the value of `selected_cohort` and render again.
+
+```{r}
+#| label: dashboard-control
+available_cohorts <- sort(unique(all_cohorts$GEO))
+selected_cohort <- "British Columbia"
+
+if (!selected_cohort %in% available_cohorts) {
+  selected_cohort <- available_cohorts[1]
+}
+
+selected_cohort
+```
+
+## Summary
+
+```{r}
+#| label: dashboard-summary
+dashboard_summary <- all_cohorts |>
+  filter(
+    GEO == selected_cohort,
+    `Demographic characteristics` == "All persons",
+    Statistics == "Number of persons",
+    `Household food security status` %in% c(
+      "Food secure",
+      "Food insecure, marginal",
+      "Food insecure, moderate",
+      "Food insecure, severe"
+    )
+  ) |>
+  transmute(
+    `Food security status` = `Household food security status`,
+    `Estimated people` = VALUE
+  )
+
+kable(dashboard_summary)
+```
+
+## Visualization
+
+```{r}
+#| label: dashboard-plot
+ggplot(
+  dashboard_summary,
+  aes(
+    x = reorder(`Food security status`, `Estimated people`),
+    y = `Estimated people`,
+    fill = `Food security status`
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  scale_y_continuous(
+    labels = scales::label_comma(),
+    expand = expansion(mult = c(0, 0.12))
+  ) +
+  labs(
+    title = paste("Estimated people by food security status:", selected_cohort),
+    subtitle = "2024 household food security estimates",
+    x = NULL,
+    y = "Estimated people",
+    caption = "Descriptive counts; vertical scale begins at zero."
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## Interpretation
+
+For the selected province, the table and figure describe estimated 2024 household food security counts. Food-secure people make up the largest group, while the marginal, moderate, and severe categories show the remaining food-insecure estimates. Absolute counts should not be used to compare prevalence across provinces because province populations differ. These are descriptive prepared-dataset estimates, not causal results or a population trend.
+
+## Limitation
+
+- The estimates are descriptive and do not apply survey weights or adjust for province population size.
+- Missing or excluded records may affect the results.
+- Cross-sectional differences do not establish causality or show a trend over time.
