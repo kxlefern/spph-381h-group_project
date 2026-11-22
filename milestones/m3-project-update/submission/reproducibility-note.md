@@ -1,0 +1,3 @@
+# Reproducibility Note
+
+To reproduce our outsputs, open the repository in a new codespace and from the project root, run `quarto render milestones/m3-project-update/submission/report-draft.qmd` and `quarto render dashboard/dashboard.qmd`. Both sources load the committed CSV at `data/13100835.csv` using a relative path and require only `tidyverse` and `knitr`. We tested this in a fresh codespace and both files rendered successfully without any manual changes. 
